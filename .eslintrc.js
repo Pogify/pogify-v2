@@ -22,6 +22,7 @@ module.exports = {
   },
   rules: {
     "no-console": ["warn", { allow: ["error"] }],
+    "no-constant-condition": ["warn", { checkLoops: false }],
     "no-plusplus": ["error", { allowForLoopAfterthoughts: true }],
     "no-use-before-define": "off",
     "no-underscore-dangle": ["error", { allowAfterThis: true }],
@@ -40,6 +41,7 @@ module.exports = {
     "eslint-comments/disable-enable-pair": ["warn", { allowWholeFile: true }],
     "react/jsx-props-no-spreading": ["error", { html: "ignore" }],
     "react/no-unescaped-entities": ["warn", { forbid: [">"] }],
+    "react/react-in-jsx-scope": "off",
     "react/require-default-props": "off",
     "jsx-a11y/label-has-associated-control": ["error", { assert: "either" }],
     "react/jsx-filename-extension": [1, { extensions: [".jsx", ".tsx"] }],

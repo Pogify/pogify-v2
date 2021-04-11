@@ -1,8 +1,19 @@
-import React from "react";
-import logo from "./logo.svg";
-import "./App.css";
+import { useState } from "react"
+import logo from "./logo.svg"
+import "./App.css"
+import newSession from "./api/session/newSession"
+import SessionHost from "./models/sessionHost"
 
 function App(): JSX.Element {
+  const [session, setSession] = useState<null | SessionHost>(null)
+
+  const onClick = async () => {
+    const sessionHost = await SessionHost.new()
+    console.log(sessionHost)
+    // @ts-expect-error | skenf
+    window.sessionHost = sessionHost
+  }
+
   return (
     <div className="App">
       <header className="App-header">
@@ -10,25 +21,13 @@ function App(): JSX.Element {
         <p>
           Edit <code>src/App.tsx</code> and save to reload.
         </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn Reacts
-          <button
-            type="button"
-            onClick={() => {
-              "test";
-            }}
-          >
-            thing
-          </button>
-        </a>
+
+        <button type="button" onClick={onClick}>
+          thing
+        </button>
       </header>
     </div>
-  );
+  )
 }
 
-export default App;
+export default App
