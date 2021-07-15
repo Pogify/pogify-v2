@@ -1,7 +1,9 @@
-import axios from "axios"
+import promiseRetry from "promise-retry"
 import { SessionClaim } from "../api/session/answerChallenge"
 import newSession from "../api/session/newSession"
 import refreshSessionAccessToken from "../api/session/refreshSessionAccessToken"
+import type { UpdateResponse } from "../api/session/postUpdate"
+import { postUpdate } from "../api/session/postUpdate"
 
 export default class SessionHost {
   static new = async (): Promise<SessionHost> => {
@@ -31,6 +33,7 @@ export default class SessionHost {
     this._tokenTTL = sessionClaim.expiresIn
     this._token = sessionClaim.token
     this._refreshToken = sessionClaim.refreshToken
+    this._alive = true
   }
 
   protected _sessionId!: string
@@ -73,6 +76,12 @@ export default class SessionHost {
     return this._lastRefreshedAt
   }
 
+  protected _alive!: boolean
+
+  get alive(): boolean {
+    return this._alive
+  }
+
   protected fetchNewToken = async (): Promise<void> => {
     const sessionClaimWithNewTokens = await refreshSessionAccessToken(
       this.token,
@@ -82,11 +91,34 @@ export default class SessionHost {
     this.setProperties(sessionClaimWithNewTokens)
   }
 
-  postUpdate = (update: unknown): void => {
-    axios.post("https://api.pogify.net/v2/session/update", update, {
-      headers: {
-        "X-SESSION-TOKEN": this.token,
+  postUpdate = async (update: unknown): Promise<UpdateResponse> => {
+    const res = await promiseRetry(
+      // eslint-disable-next-line consistent-return
+      async (retry) => {
+        try {
+          return await postUpdate(this.token, update)
+        } catch (e) {
+          if (e.statusCode === 401) {
+            await this.fetchNewToken()
+          } else if (
+            e.statusCode === 400 &&
+            e.response.body === "refresh token expired"
+          )
+            retry(e)
+        }
       },
-    })
+      { factor: 1.2, retries: 5 }
+    )
+
+    // this block shouldn't ever be called but its to keep typescript happy.
+    // ts doesn't pick up on how promiseRetry would throw an error.
+    if (!res) return Promise.reject(new Error("it didn't work"))
+
+    return res
+  }
+
+  saveSession = (): void => {
+    window.localStorage.setItem("pogify::accessToken", this.token)
+    window.localStorage.setItem("pogify::refreshToken", this.refreshToken)
   }
 }

@@ -1,8 +1,8 @@
 import { useState } from "react"
 import logo from "./logo.svg"
 import "./App.css"
-import newSession from "./api/session/newSession"
 import SessionHost from "./models/sessionHost"
+import SessionClient from "./models/sessionClient"
 
 function App(): JSX.Element {
   const [session, setSession] = useState<null | SessionHost>(null)
@@ -10,8 +10,19 @@ function App(): JSX.Element {
   const onClick = async () => {
     const sessionHost = await SessionHost.new()
     console.log(sessionHost)
+    setSession(sessionHost)
     // @ts-expect-error | skenf
     window.sessionHost = sessionHost
+  }
+
+  const postUpdate = () => {
+    console.log("out", Date.now())
+    session?.postUpdate(Date.now())
+  }
+
+  const subscribe = () => {
+    if (!session) return
+    const sessionClient = new SessionClient(session.sessionId)
   }
 
   return (
@@ -23,7 +34,13 @@ function App(): JSX.Element {
         </p>
 
         <button type="button" onClick={onClick}>
-          thing
+          create
+        </button>
+        <button type="button" onClick={postUpdate}>
+          post
+        </button>
+        <button type="button" onClick={subscribe}>
+          subscribe
         </button>
       </header>
     </div>
